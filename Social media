@@ -1,0 +1,107 @@
+<img
+  alt="Dr Ojijo Intelligence System logo"
+  class="h-10 w-10 rounded-full object-cover"
+  height="80"
+  src="URL_TO_YOUR_LOGO_IMAGE.png"  // Replace with the actual URL
+  width="80"
+/>
+document.getElementById("generate-photo-btn").addEventListener("click", async (e) => {
+  e.preventDefault();
+  const desc = document.getElementById("photo-description").value.trim();
+  if (!desc) {
+    alert("Please enter a description for the photo.");
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/generate-image', { // Use a server-side endpoint
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ prompt: desc })
+    });
+
+    const data = await response.json();
+    const imageUrl = data.imageUrl;
+
+    const photoImg = document.getElementById("photo-result-img");
+    photoImg.src = imageUrl;
+    document.getElementById("photo-result").classList.remove("hidden");
+
+  } catch (error) {
+    console.error("Error generating image:", error);
+    alert("Failed to generate image.  Check console for details.");
+  }
+});
+const OpenAI = require('openai');
+const openai = new OpenAI({ apiKey: 'YOUR_OPENAI_API_KEY' });
+
+app.post('/api/generate-image', async (req, res) => {
+  try {
+    const prompt = req.body.prompt;
+    const response = await openai.images.generate({
+      prompt: prompt,
+      n: 1,
+      size: "512x512", // Adjust size as needed
+    });
+    const imageUrl = response.data[0].url;
+    res.json({ imageUrl });
+  } catch (error) {
+    console.error("OpenAI Error:", error);
+    res.status(500).json({ error: 'Failed to generate image' });
+  }
+});
+document.getElementById("generate-tts-btn").addEventListener("click", async (e) => {
+  e.preventDefault();
+  const text = document.getElementById("tts-text").value.trim();
+  if (!text) {
+    alert("Please enter text to convert to speech.");
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/generate-speech', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ text: text })
+    });
+
+    const data = await response.blob(); // Get the audio as a Blob
+    const audioUrl = URL.createObjectURL(data);
+
+    const ttsAudio = document.getElementById("tts-audio");
+    ttsAudio.src = audioUrl;
+    ttsAudio.classList.remove("hidden");
+    ttsAudio.play();
+
+  } catch (error) {
+    console.error("Error generating speech:", error);
+    alert("Failed to generate speech. Check console for details.");
+  }
+});app.post
+const { TextToSpeechClient } = require('@google-cloud/text-to-speech');
+
+const client = new TextToSpeechClient();
+
+app.post('/api/generate-speech', async (req, res) => {
+  try {
+    const text = req.body.text;
+    const request = {
+      input: { text: text },
+      voice: { languageCode: 'en-US', ssmlGender: 'NEUTRAL' },
+      audioConfig: { audioEncoding: 'MP3' },
+    };
+
+    const [response] = await client.synthesizeSpeech(request);
+    const audioContent = response.audioContent;
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.send(audioContent);
+
+  } catch (error) {
+    console.error("Google Cloud TTS Error:", error);
+    res.status(500).json({ error: 'Failed to generate speech' });
+  }
+});
